@@ -6,27 +6,76 @@ test.Figma = function(){
 
     i=1
 
-    infoList = list()
-    child = info$document
-    infoList[[child$name]] = list(
-      childrenElements=child$children
+    parentList = list()
+    parentElement = info$document
+    parentList$childrenElements=parentElement$children
+
+    parentChildrenNames = purrr::map_chr(
+      parentElement$children, ~{.x$name}
     )
 
-    infoList_i =  infoList$Document
-    infoChildrenNames = purrr::map_chr(
-      infoList_i$childrenElements, ~{.x$name}
-    )
+    for(i in seq_along(parentChildrenNames)){
+      child_i = parentElement$children[[i]]
+      # if(length(child_i)==0) next
+      child_i_list = list(
+        childrenElements = child_i$children
+      )
+      if(length(child_i$children)!=0){
+        grandChildNames = child_i_list$childElements |>
+          purrr::map_chr(~{.x$name})
 
-    infoChildren = vector("list", length(infoList_i$childrenElements)) |>
-      setNames(infoChildrenNames)
-    for(i in seq_along(infoList_i$childrenElements)){
-      # print(i)
-      childNameX = infoChildrenNames[[i]]
-      infoChildren[[childNameX]] = infoList_i$childrenElements[[i]] |> populateChildElementsForInfoList_i()
+        child_i_list |>
+          populateChildElementsForInfoList_i() ->
+          child_i_list
+        child_i_div = child_i_list$div
+        child_i_list$div = function(...) {
+          child_i_div(class=parentChildrenNames[[i]])
+        }
+        parentList[[parentChildrenNames[[i]]]] = child_i_list
+      } else {
+        parentList[[parentChildrenNames[[i]]]]$div = function(...){
+          htmltools::div(class=parentChildrenNames[[i]])
+        }
+      }
+
     }
 
+    parentList$business$div(
+
+    )
+    parentList$elements$div()
+
+    parentList$elements$div()
+
+    childElements = vector("list", length(parentChildrenNames)) |>
+      setNames(parentChildrenNames)
+
+    parentList |> names()
+    parentList |>
+      purrr::reduce()
+    infoChildren = vector("list", length(infoList_i$childrenElements)) |>
+      setNames(infoChildrenNames)
     infoList_i |>
       append(infoChildren) -> infoList_i
+
+    for(i in seq_along(infoList_i$childrenElements)){
+      # print(i)
+      i=3
+      childNameX = infoChildrenNames[[i]]
+      print(childNameX)
+      len_child_i_children = length(infoList_i$childrenElements[[i]]$children)
+
+      if(len_child_i_children==0){
+        infoList_i[[childNameX]]$childrenElements = list()
+      } else {
+        infoList_i[[childNameX]]$childrenElements = infoList_i$childrenElements[[i]]$children
+        infoList_i[[childNameX]] |>
+          append(
+            infoList_i[[childNameX]] |> populateChildElementsForInfoList_i()
+          ) -> infoList_i[[childNameX]]
+      }
+    }
+
 
     infoList_i$div = function(...) {
         purrr::map(infoChildrenNames, ~{

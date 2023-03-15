@@ -67,7 +67,9 @@ populateChildElementsForInfoList_i <- function(infoList_i) {
 
   if(length(infoList_i$childrenElements)==0) return()
 
-  infoListEnv = list()
+  infoListEnv = list(
+    childElements = infoList_i$childrenElements
+  )
   infoList_i$childrenElements -> childrenElements
   childrenElements |>
     purrr::map_chr(~{.x$name}) -> majorFrameNames
@@ -91,6 +93,7 @@ populateChildElementsForInfoList_i <- function(infoList_i) {
 
   infoListEnv$div = function(...) {
     htmltools::div(
+      ...,
       childrenDiv
     )
   }
