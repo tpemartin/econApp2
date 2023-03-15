@@ -63,16 +63,37 @@ getNodeInfoFromFigmaUrl <- function(figmaUrl="https://www.figma.com/file/9GQBb1d
 
   return(nodeInfo)
 }
-{
-  fig = Figma()
-  fig$getDiv()
-  fig[[".nodeInfo"]][["document"]][["children"]] |>
-    purrr::map_int(~{length(.x$children)}) -> lengthOfNodeChildren
+populateChildElementsForInfoList_i <- function(infoList_i) {
 
-  exportedNode = fig[[".nodeInfo"]][["document"]][["children"]][[which(lengthOfNodeChildren == 1)]]
-  View(exportedNode)
-  fig$.nodeInfo |> unlist() -> nodeFlat
+  if(length(infoList_i$childrenElements)==0) return()
 
-  whichAreClassNames = names(nodeFlat) |> stringr::str_which("(document\\.name|children\\.name)$")
-  nodeFlat[whichAreClassNames]
+  infoListEnv = list()
+  infoList_i$childrenElements -> childrenElements
+  childrenElements |>
+    purrr::map_chr(~{.x$name}) -> majorFrameNames
+
+  elementChildrenList=vector("list", length(childrenElements)) |>
+    setNames(majorFrameNames)
+
+  childrenDiv = list()
+  for(i in seq_along(majorFrameNames)){
+    childrenElement_i = childrenElements[[i]]
+    infoListEnv[[childrenElements[[i]]$name]]=list(
+      childrenElements = childrenElement_i$children
+    )
+    infoListEnv[[childrenElements[[i]]$name]]$div = function(...) htmltools::div(
+      class=majorFrameNames[[i]],...
+    )
+    childrenDiv = append(
+      childrenDiv, list(infoListEnv[[childrenElements[[i]]$name]]$div())
+    )
+   }
+
+  infoListEnv$div = function(...) {
+    htmltools::div(
+      childrenDiv
+    )
+  }
+
+  return(infoListEnv)
 }
