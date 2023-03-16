@@ -1,6 +1,9 @@
-#' Create Div generator from a link to Figma frame
+#' Generate a Figma div generator
 #'
-#' @return an environment to show raw response from Figma. Other than that a "page" object will be created in the global environment
+#' @return page in the global environment
+#' @export
+#'
+#' @examples none
 Figma = function(){
   fig = new.env()
   getNodeInfoFromFigmaUrlInClipboard() -> info
@@ -40,6 +43,9 @@ Figma = function(){
   }
   return(fig)
 }
+
+### helpers
+
 getNodeInfoFromFigmaUrlInClipboard = function(){
   clipr::read_clip() -> figmaUrl0
   nodeInfo = getNodeInfoFromFigmaUrl(figmaUrl0)

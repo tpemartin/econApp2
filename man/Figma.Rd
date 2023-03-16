@@ -2,13 +2,16 @@
 % Please edit documentation in R/figmaUrl.R
 \name{Figma}
 \alias{Figma}
-\title{Create Div generator from a link to Figma frame}
+\title{Generate a Figma div generator}
 \usage{
 Figma()
 }
 \value{
-an environment to show raw response from Figma. Other than that a "page" object will be created in the global environment
+page in the global environment
 }
 \description{
-Create Div generator from a link to Figma frame
+Generate a Figma div generator
+}
+\examples{
+none
 }
