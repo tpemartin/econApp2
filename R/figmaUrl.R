@@ -109,7 +109,7 @@ buildTargetFrame <- function(targetFrameName, targetFrame) {
     return(targetFrameEnv)
   }
 getNodeInfoFromFigmaUrlInClipboard = function(){
-  clipr::read_clip() -> figmaUrl0
+  clipr::read_clip(allow_non_interactive = TRUE) -> figmaUrl0
   nodeInfo = getNodeInfoFromFigmaUrl(figmaUrl0)
 
 }

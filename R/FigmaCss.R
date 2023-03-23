@@ -36,7 +36,7 @@ getCss <- function(component, css) {
 
   lastRow = length(css)
   css[[lastRow]] |> paste0("\n}") -> css[[lastRow]]
-  css |> clipr::write_clip()
+  css |> clipr::write_clip(allow_non_interactive = TRUE)
   invisible(css)
 }
 getCssFromComponent = function(){
@@ -50,7 +50,7 @@ populateSeparateCss <- function(targetFrame){
   }
 
   targetFrame$css = function(){
-    clipr::read_clip() -> clipText
+    clipr::read_clip(allow_non_interactive = TRUE) -> clipText
     assertthat::assert_that(
       stringr::str_detect(clipText, "^https", negate = T) |> all(),
       msg = "Did you forget to do Copy as Css?"
