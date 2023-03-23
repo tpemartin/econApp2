@@ -34,6 +34,7 @@ Figma = function(){
     if(length(targetFrame)!=0){
       page[[page_i]]$frame[[targetFrame]] |> populateSeparateDiv()
       page[[page_i]]$frame[[targetFrame]] |> refineEnvDiv()
+      page[[page_i]]$frame[[targetFrame]] |> populateSeparateCss()
     }
   }
     .GlobalEnv$page <- page
@@ -268,7 +269,7 @@ obtainChildrenNames <- function(parentList) {
   parentList |> names() -> listNames
   listNames |>
     setdiff(
-      c("childrenElements", "div", "classname")
+      c("childrenElements", "div", "classname", "css")
     )
 }
 populateFrameEnv = function(frameEnv){
@@ -299,6 +300,7 @@ refineEnvDiv <- function(tf) {
 
   for(i in seq_along(childEnvNames)){
     tf[[childEnvNames[[i]]]] |> refineEnvDiv()
+    tf[[childEnvNames[[i]]]] |> populateSeparateCss()
   }
 }
 populateSeparateDiv <- function(targetFrame){
