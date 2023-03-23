@@ -18,6 +18,42 @@ Figma = function(){
     page[[page_i]] = list(
       frame = list()
     )
+    # get page_i's frames
+    pages[[i]]$children |> purrr::map_chr(~{.x$name}) -> availableFrames
+    if(length(availableFrames)==0) next
+    for(j in seq_along(availableFrames)){
+      targetFrameName = availableFrames[[j]]
+      targetPage = pages[[page_i]]
+      targetPage$children |> purrr::keep(~{.x$name==targetFrameName}) -> targetFrame
+      targetFrame <- targetFrame[[1]]
+      page[[page_i]]$frame[[targetFrameName]] = buildTargetFrame(targetFrameName, targetFrame)
+
+      page[[page_i]]$frame[[targetFrameName]] |>
+        poplutateDivCss()
+    }
+  }
+    .GlobalEnv$page <- page
+
+  fig$getDiv = function(){
+    getNodeInfoFromFigmaUrlInClipboard() -> fig$.nodeInfo
+  }
+  return(fig)
+}
+
+Figma2 = function(){
+  fig = new.env()
+  getNodeInfoFromFigmaUrlInClipboard() -> info
+  info$document$children |>
+    purrr::map(~{.x$name}) -> pageNames
+  info$document$children |> setNames(pageNames)-> pages
+
+
+  page = list()
+  for(i in seq_along(pageNames)){
+    page_i = pageNames[[i]]
+    page[[page_i]] = list(
+      frame = list()
+    )
     pages[[i]]$children |> purrr::map_chr(~{.x$name}) -> targetFrame
     if(length(targetFrame)==0) next
     page[[page_i]]$frame[[targetFrame]] <- new.env()
@@ -37,16 +73,41 @@ Figma = function(){
       page[[page_i]]$frame[[targetFrame]] |> populateSeparateCss()
     }
   }
-    .GlobalEnv$page <- page
+  .GlobalEnv$page <- page
 
   fig$getDiv = function(){
     getNodeInfoFromFigmaUrlInClipboard() -> fig$.nodeInfo
   }
   return(fig)
 }
-
 ### helpers
+poplutateDivCss = function(targetFrameEnv){
 
+    targetFrameEnv |> populateSeparateDiv()
+    targetFrameEnv |> refineEnvDiv()
+    targetFrameEnv |> populateSeparateCss()
+
+}
+
+buildTargetFrame <- function(targetFrameName, targetFrame) {
+    targetFrameEnv <- new.env()
+    targetFrameEnv$classname = targetFrameName
+    # Each page only has one child i.e. targetFrame
+    targetFrameEnv$childrenElements =
+      targetFrame$children
+
+    # populate targetFrameEnv
+    # debug(populateFrameEnv)
+    targetFrameEnv |>
+      populateFrameEnv()
+
+    # if(length(targetFrame)!=0){
+    targetFrameEnv |> populateSeparateDiv()
+    targetFrameEnv |> refineEnvDiv()
+    targetFrameEnv |> populateSeparateCss()
+    # }
+    return(targetFrameEnv)
+  }
 getNodeInfoFromFigmaUrlInClipboard = function(){
   clipr::read_clip() -> figmaUrl0
   nodeInfo = getNodeInfoFromFigmaUrl(figmaUrl0)
@@ -222,7 +283,7 @@ populateParentList <- function(parentList) {
     parentList$childrenElements, ~{.x$name}
   )
 
-  i = 1
+
   length(parentList)
   envName = parentList$childrenElements[[i]]$name
   parentList[[envName]] = new.env()
@@ -319,11 +380,21 @@ populateSeparateDiv <- function(targetFrame){
 }
 populateEnvDiv <- function(targetFrame) {
   targetFrame |> obtainChildrenNames() -> childNames
+
+  #divText = ifelse(targetFrame$type=="TEXT", targetFrame$characters, "")
+
   if(length(childNames)==0){
     targetFrame$div = function(...){
-      htmltools::div(
-        ..., class=classname
-      )}
+      if(type=="TEXT"){
+        return(
+          htmltools::div(..., class = classname, characters)
+        )
+      } else {
+        return(
+          htmltools::div(..., class = classname)
+        )
+      }
+    }
     environment(targetFrame$div) <- targetFrame
   } else {
     for(i in seq_along(childNames)) populateEnvDiv(targetFrame[[childNames[[i]]]])

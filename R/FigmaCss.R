@@ -15,6 +15,14 @@ getCss <- function(component, css) {
     stringr::str_detect(css[[1]],cc[[1]]),
     msg=glue::glue("Did you forget to Copy as Css from the '{cc[[1]]}' frame?")
   )
+  if(!all(table(cc)==1)){
+    tbcc = table(cc)
+    tbcc[tbcc!=1] |> names() |> paste(collapse = " ") |>
+      paste(
+        "are duplicated.", sep =" ") -> msg
+    warning(msg)
+    stop("Duplicated class names")
+  }
   for(i in seq_along(cc)){
     # cc[[i]]
     css |> stringr::str_which(glue::glue("\\/\\* {cc[[i]]} \\*\\/")) -> targetRow

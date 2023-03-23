@@ -1,0 +1,50 @@
+/* app */
+.app {
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 16px;
+
+position: relative;
+width: 390px;
+height: 844px;
+left: 81px;
+top: 157px;
+
+background: #FFFFFF;
+
+
+}
+/* postcard-holder */
+.postcard-holder {
+
+width: 390px;
+height: 703px;
+
+background: #82FEB4;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+}
+/* footer */
+.footer {
+
+width: 390px;
+height: 123px;
+
+background: #AACCFF;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+}
