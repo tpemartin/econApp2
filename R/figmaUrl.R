@@ -27,7 +27,7 @@ Figma = function(){
       targetPage$children |> purrr::keep(~{.x$name==targetFrameName}) -> targetFrame
       targetFrame <- targetFrame[[1]]
       page[[page_i]]$frame[[targetFrameName]] = buildTargetFrame(targetFrameName, targetFrame)
-
+      #page[[page_i]]$frame[[targetFrameName]] = populateDivText(page[[page_i]]$frame[[targetFrameName]], targetFrame)
       page[[page_i]]$frame[[targetFrameName]] |>
         poplutateDivCss()
     }
@@ -40,46 +40,7 @@ Figma = function(){
   return(fig)
 }
 
-Figma2 = function(){
-  fig = new.env()
-  getNodeInfoFromFigmaUrlInClipboard() -> info
-  info$document$children |>
-    purrr::map(~{.x$name}) -> pageNames
-  info$document$children |> setNames(pageNames)-> pages
 
-
-  page = list()
-  for(i in seq_along(pageNames)){
-    page_i = pageNames[[i]]
-    page[[page_i]] = list(
-      frame = list()
-    )
-    pages[[i]]$children |> purrr::map_chr(~{.x$name}) -> targetFrame
-    if(length(targetFrame)==0) next
-    page[[page_i]]$frame[[targetFrame]] <- new.env()
-    page[[page_i]]$frame[[targetFrame]]$classname = targetFrame
-    # Each page only has one child i.e. targetFrame
-    page[[page_i]]$frame[[targetFrame]]$childrenElements =
-      pages[[page_i]]$children[[1]]$children
-
-    # populate targetFrameEnv
-    # debug(populateFrameEnv)
-    page[[page_i]]$frame[[targetFrame]] |>
-      populateFrameEnv()
-
-    if(length(targetFrame)!=0){
-      page[[page_i]]$frame[[targetFrame]] |> populateSeparateDiv()
-      page[[page_i]]$frame[[targetFrame]] |> refineEnvDiv()
-      page[[page_i]]$frame[[targetFrame]] |> populateSeparateCss()
-    }
-  }
-  .GlobalEnv$page <- page
-
-  fig$getDiv = function(){
-    getNodeInfoFromFigmaUrlInClipboard() -> fig$.nodeInfo
-  }
-  return(fig)
-}
 ### helpers
 poplutateDivCss = function(targetFrameEnv){
 
@@ -96,6 +57,7 @@ buildTargetFrame <- function(targetFrameName, targetFrame) {
     targetFrameEnv$childrenElements =
       targetFrame$children
 
+
     # populate targetFrameEnv
     # debug(populateFrameEnv)
     targetFrameEnv |>
@@ -106,8 +68,21 @@ buildTargetFrame <- function(targetFrameName, targetFrame) {
     targetFrameEnv |> refineEnvDiv()
     targetFrameEnv |> populateSeparateCss()
     # }
+
     return(targetFrameEnv)
+}
+populateDivText = function(targetFrameEnv, targetFrame){
+  targetFrame |> obtainChildrenNames() -> childNames
+  if(length(childNames)==0){
+     targetFrameEnv$divText = targetFrame$characters
+     return()
+  } else {
+    for(i in seq_along(childNames)){
+      populateDivText(targetFrameEnv[[childNames[[i]]]],targetFrame$children[[i]])
+    }
   }
+  targetFrameEnv$divText = targetFrame$characters
+}
 getNodeInfoFromFigmaUrlInClipboard = function(){
   clipr::read_clip(allow_non_interactive = TRUE) -> figmaUrl0
   nodeInfo = getNodeInfoFromFigmaUrl(figmaUrl0)
@@ -330,7 +305,7 @@ obtainChildrenNames <- function(parentList) {
   parentList |> names() -> listNames
   listNames |>
     setdiff(
-      c("childrenElements", "div", "classname", "css")
+      c("childrenElements", "div", "classname", "css", "divText")
     )
 }
 populateFrameEnv = function(frameEnv){
@@ -342,11 +317,15 @@ populateFrameEnv = function(frameEnv){
     childFrame = frameEnv[[childName]]
     childFrame$childrenElements = frameEnv$childrenElements[[i]]$children
     childFrame$classname = childName
+    childFrame$divText = frameEnv$childrenElements[[i]]$characters
     populateFrameEnv(childFrame)
   }
 }
 refineEnvDiv <- function(tf) {
   tf |> obtainChildrenNames() -> childEnvNames
+  # tf= catType
+  # if(!is.null(tf$divText)) divText=tf$divText
+
   tf$div = function(...){
     divList = list()
     for(i in seq_along(childEnvNames)){
@@ -355,6 +334,7 @@ refineEnvDiv <- function(tf) {
     htmltools::div(
       ...,
       divList,
+      tf$divText,
       class=tf$classname
     )
   }
@@ -379,11 +359,13 @@ populateSeparateDiv <- function(targetFrame){
 
 }
 populateEnvDiv <- function(targetFrame) {
+  # browser()
   targetFrame |> obtainChildrenNames() -> childNames
 
   #divText = ifelse(targetFrame$type=="TEXT", targetFrame$characters, "")
 
   if(length(childNames)==0){
+    # browser()
     targetFrame$div = function(...){
       if(type=="TEXT"){
         return(
